@@ -1,4 +1,6 @@
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import fs from "node:fs";
+import path from "node:path";
 
 /**
  * Supported Knowledge Base Domain Modes
@@ -109,7 +111,6 @@ const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
 };
 
 export default function piKnowledgeHarness(pi: ExtensionAPI) {
-  const { fs, path } = pi.pi;
   const sessionActivities: string[] = [];
 
   pi.setLabel("Pi Knowledge Harness");
