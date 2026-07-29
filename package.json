@@ -1,0 +1,29 @@
+{
+  "name": "pi-knowledge-harness",
+  "version": "1.0.0",
+  "description": "Universal Knowledge Base Harness for OMP (Oh My Pi) sessions across Development, Research, Writing, and General workflows.",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "omp",
+    "extension",
+    "harness",
+    "knowledge-base",
+    "agent"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@oh-my-pi/pi-coding-agent": "latest",
+    "typescript": "^5.0.0"
+  },
+  "omp": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# OMP session & local knowledge runtime outputs
+.knowledge/
+.omp/
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
