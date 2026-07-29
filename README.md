@@ -17,6 +17,8 @@
 
 ## Installation
 
+### For OMP (Oh My Pi)
+
 Install directly using OMP's built-in plugin manager:
 
 ```bash
@@ -27,6 +29,23 @@ Or via full Git URL:
 
 ```bash
 omp plugin install https://github.com/byeongryul-cho/pi-knowledge-harness
+```
+
+---
+
+### For Pi
+
+Install using Pi's plugin manager:
+
+```bash
+pi plugin install github:byeongryul-cho/pi-knowledge-harness
+```
+
+Or clone directly into Pi's global extensions directory:
+
+```bash
+mkdir -p ~/.pi/agent/extensions
+git clone https://github.com/byeongryul-cho/pi-knowledge-harness.git ~/.pi/agent/extensions/pi-knowledge-harness
 ```
 
 ---
@@ -47,8 +66,8 @@ Once installed, the extension automatically activates on session startup and cre
 
 ## Management Commands
 
-- View installed plugins: `omp plugin list`
-- Uninstall plugin: `omp plugin uninstall pi-knowledge-harness`
+- View installed plugins: `omp plugin list` / `pi plugin list`
+- Uninstall plugin: `omp plugin uninstall pi-knowledge-harness` / `pi plugin uninstall pi-knowledge-harness`
 
 ## License
 
