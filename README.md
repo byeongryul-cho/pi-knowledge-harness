@@ -17,38 +17,16 @@
 
 ## Installation
 
-### 1. Global Installation (Recommended)
+Install directly using OMP's built-in plugin manager:
 
-To enable `pi-knowledge-harness` across all sessions globally:
-
-#### For OMP (Oh My Pi)
 ```bash
-mkdir -p ~/.omp/agent/extensions
-git clone https://github.com/byeongryul-cho/pi-knowledge-harness.git ~/.omp/agent/extensions/pi-knowledge-harness
+omp plugin install github:byeongryul-cho/pi-knowledge-harness
 ```
 
-#### For Pi
+Or via full Git URL:
+
 ```bash
-mkdir -p ~/.pi/agent/extensions
-git clone https://github.com/byeongryul-cho/pi-knowledge-harness.git ~/.pi/agent/extensions/pi-knowledge-harness
-```
-
----
-
-### 2. Local Project Installation
-
-To use `pi-knowledge-harness` only inside a specific project:
-
-#### For OMP (Oh My Pi)
-```bash
-mkdir -p .omp/extensions
-git clone https://github.com/byeongryul-cho/pi-knowledge-harness.git .omp/extensions/pi-knowledge-harness
-```
-
-#### For Pi
-```bash
-mkdir -p .pi/extensions
-git clone https://github.com/byeongryul-cho/pi-knowledge-harness.git .pi/extensions/pi-knowledge-harness
+omp plugin install https://github.com/byeongryul-cho/pi-knowledge-harness
 ```
 
 ---
@@ -66,6 +44,11 @@ Once installed, the extension automatically activates on session startup and cre
 /knowledge-mode development  # Switch to Software Development mode
 /knowledge-mode general      # Switch to General Management mode
 ```
+
+## Management Commands
+
+- View installed plugins: `omp plugin list`
+- Uninstall plugin: `omp plugin uninstall pi-knowledge-harness`
 
 ## License
 
