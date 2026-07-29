@@ -35,17 +35,16 @@ omp plugin install https://github.com/byeongryul-cho/pi-knowledge-harness
 
 ### For Pi
 
-Install using Pi's plugin manager:
+Install directly using Pi's plugin manager:
 
 ```bash
 pi plugin install github:byeongryul-cho/pi-knowledge-harness
 ```
 
-Or clone directly into Pi's global extensions directory:
+Or via full Git URL:
 
 ```bash
-mkdir -p ~/.pi/agent/extensions
-git clone https://github.com/byeongryul-cho/pi-knowledge-harness.git ~/.pi/agent/extensions/pi-knowledge-harness
+pi plugin install https://github.com/byeongryul-cho/pi-knowledge-harness
 ```
 
 ---
