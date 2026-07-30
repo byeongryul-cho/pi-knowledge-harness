@@ -467,25 +467,9 @@ Execute the .knowledge/ edit tool NOW!`;
   });
 
   // 7. Session Stop: Safety net logging if unreflected changes remain
-  pi.on("session_stop", async (_event: SessionStopEvent, ctx: ExtensionContext) => {
-    if (!hasUnreflectedChanges) return;
-
-    const cwd = getWorkspaceDir(ctx);
-    const knowledgeDir = path.join(cwd, ".knowledge");
-    if (!fs.existsSync(knowledgeDir)) return;
-
-    try {
-      const filePath = path.join(knowledgeDir, "01-plans.md");
-      if (fs.existsSync(filePath)) {
-        let content = await fs.promises.readFile(filePath, "utf-8");
-        const timestamp = new Date().toLocaleDateString();
-
-        const appendNotice = `\n\n<!-- Unreflected Session Activity Detected (${timestamp}) -->\n<!-- Note: Session closed before agent completed .knowledge sync. Please review and update. -->\n`;
-        content += appendNotice;
-        await fs.promises.writeFile(filePath, content, "utf-8");
-      }
-    } catch (err) {
-      pi.logger.warn("Failed to update safety net on session stop", { error: String(err) });
+  pi.on("session_stop", async (_event: SessionStopEvent) => {
+    if (hasUnreflectedChanges) {
+      pi.logger.warn("Session stopped with unreflected project changes in .knowledge/.");
     }
   });
 }
