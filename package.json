@@ -18,7 +18,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@oh-my-pi/pi-coding-agent": "latest",
+    "@oh-my-pi/pi-coding-agent": "^17.2.1",
+    "@types/node": "^26.1.2",
     "typescript": "^5.0.0"
   },
   "omp": {

@@ -1,10 +1,14 @@
-import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import type {
+  BeforeProviderRequestEvent,
+  ExtensionAPI,
+  ExtensionContext,
+  SessionStartEvent,
+  SessionStopEvent,
+  ToolResultEvent,
+} from "@oh-my-pi/pi-coding-agent";
 import fs from "node:fs";
 import path from "node:path";
 
-/**
- * Supported Knowledge Base Domain Modes
- */
 export type KnowledgeType = "development" | "research" | "writing" | "general";
 
 export interface KnowledgeConfig {
@@ -12,97 +16,102 @@ export interface KnowledgeConfig {
   title: string;
 }
 
+interface ActivityEntry {
+  timestamp: string;
+  type: "tool" | "input" | "decision";
+  description: string;
+}
+
+function isRecord(val: unknown): val is Record<string, unknown> {
+  return typeof val === "object" && val !== null;
+}
+
 const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
   development: {
-    "conventions.md": `# Coding Conventions & Standards
+    "00-conventions.md": `# Development Conventions
 
-## Code Style
-- Language & Framework:
-- Naming Conventions: camelCase for variables/functions, PascalCase for classes/components.
-- Formatting: 2 spaces indent, semicolons enabled.
+## 1. General Principles
+- **NO EMOJI**: Do not use emojis in commit messages, code, comments, or documentation.
 
-## Commit & Branch Policy
-- Commit format: \`feat:\`, \`fix:\`, \`docs:\`, \`refactor:\`
-- Branching: \`main\` (stable), \`feature/*\` for new work.
+## 2. Git Commit Convention
+- Format: \`<type>(<scope>): <subject>\`
+- Types: \`feat\`, \`fix\`, \`docs\`, \`style\`, \`refactor\`, \`test\`, \`chore\`
+
+## 3. Code Style & Architecture
+- Maintain clean module separation, type safety, and robust error handling.
 `,
-    "architecture.md": `# Architecture & System Design
+    "01-plans.md": `# Development Plans & Tasks
 
-## Tech Stack
-- Frontend:
-- Backend:
-- Database / Storage:
+## 1. Current Phase
+<!-- Active feature or milestone goal -->
 
-## Module Boundaries
-- Brief description of system components and data flow.
+## 2. In Progress
+- [ ] Task 1
+
+## 3. Backlog / Todo
+- [ ] Future improvement 1
+
+## 4. Completed
+- [x] Initial setup
 `,
-    "troubleshooting.md": `# Troubleshooting & Issue Log
+    "02-changelog.md": `# Changelog & Architecture Decisions
 
-## Resolved Issues
-- [YYYY-MM-DD] **Issue Title**: Root cause and resolution.
+## [Unreleased]
+
+### Added
+- Initial workspace structure
+
+### Changed
+
+### Fixed
+`,
+    "03-troubleshooting.md": `# Troubleshooting Log
+
+<!-- Document resolved bugs and issues -->
 `,
   },
 
   research: {
-    "findings.md": `# Key Research Findings & Insights
+    "findings.md": `# Research Findings & Insights
 
-## Summary of Discoveries
-- **Core Topic**:
-- **Key Insight 1**:
-- **Key Insight 2**:
+## Key Takeaways
+- Insight 1
 
-## Comparative Analysis
-| Category | Option A | Option B | Pros / Cons |
-| :--- | :--- | :--- | :--- |
+## Literature & Resources
+- Resource 1
 `,
-    "sources.md": `# Reference Sources & Literature
+    "hypotheses.md": `# Research Hypotheses & Experiments
 
-## Evaluated Sources
-- [Title / Link]: Key takeaways and validity assessment.
-- [Article / Paper]: Relevant statistics or quotes.
+## Open Questions
+- Question 1
+
+## Experiments
+- [ ] Experiment 1
 `,
   },
 
   writing: {
-    "style-guide.md": `# Content Style Guide
+    "outline.md": `# Document Outline & Structure
 
-## Target Audience
-- Primary readers:
+## Section 1: Overview
+- Key point
 
-## Tone of Voice
-- Style: Professional, concise, evidence-based, approachable.
-- Formatting rules: Active voice, clear section headings, bulleted lists for key facts.
-
-## Terminology Rules
-- Preferred terms vs forbidden jargon.
+## Section 2: Main Content
 `,
-    "glossary.md": `# Terminology & Glossary
-
-- **Term A**: Definition and canonical usage.
-- **Term B**: Preferred translation / alias.
-`,
-    "outline.md": `# Content Structure & Draft Outline
-
-## Current Draft Outline
-1. Introduction & Context
-2. Key Points & Arguments
-3. Conclusion & Next Steps
+    "drafts.md": `# Working Drafts & Working Notes
 `,
   },
 
   general: {
     "decisions.md": `# Key Decisions (ADR)
 
-## Decision History
-- **[YYYY-MM-DD] Decision Title**:
-  - Context:
-  - Decision:
-  - Impact:
+## Decision Log
+- Initial architecture established.
 `,
     "action-items.md": `# Action Items & To-Do Tracking
 
 ## Active Tasks
-- [ ] Task 1 (Owner / Priority)
-- [ ] Task 2
+- [ ] Task 1
 
 ## Completed
 - [x] Initial workspace setup
@@ -111,13 +120,14 @@ const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
 };
 
 export default function piKnowledgeHarness(pi: ExtensionAPI) {
-  const sessionActivities: string[] = [];
+  const sessionActivities: ActivityEntry[] = [];
 
   pi.setLabel("Pi Knowledge Harness");
 
-  /**
-   * Reads .knowledge/config.yml mode or defaults to general
-   */
+  function getWorkspaceDir(ctx?: ExtensionContext): string {
+    return ctx?.cwd || process.cwd();
+  }
+
   async function loadConfig(knowledgeDir: string): Promise<KnowledgeConfig> {
     const configPath = path.join(knowledgeDir, "config.yml");
     let type: KnowledgeType = "general";
@@ -134,23 +144,18 @@ export default function piKnowledgeHarness(pi: ExtensionAPI) {
         const titleMatch = raw.match(/title:\s*["']?([^"'\n]+)["']?/);
         if (titleMatch) title = titleMatch[1].trim();
       } catch (e) {
-        pi.logger.warn("Failed to parse .knowledge/config.yml, falling back to default.", e);
+        pi.logger.warn("Failed to parse .knowledge/config.yml, falling back to default.", { error: String(e) });
       }
     }
 
     return { type, title };
   }
 
-  /**
-   * Initializes .knowledge/ structure according to domain mode
-   */
   async function initKnowledgeBase(cwd: string): Promise<KnowledgeConfig> {
     const knowledgeDir = path.join(cwd, ".knowledge");
-    const historyDir = path.join(knowledgeDir, "history");
 
     if (!fs.existsSync(knowledgeDir)) {
-      await fs.promises.mkdir(historyDir, { recursive: true });
-
+      await fs.promises.mkdir(knowledgeDir, { recursive: true });
       const defaultConfig = `type: general\ntitle: Universal Knowledge Base\n`;
       await fs.promises.writeFile(path.join(knowledgeDir, "config.yml"), defaultConfig);
 
@@ -166,7 +171,6 @@ This directory stores persistent project knowledge across all OMP sessions.
 
     const config = await loadConfig(knowledgeDir);
 
-    // Populate missing domain templates
     const templates = DOMAIN_TEMPLATES[config.type] || {};
     for (const [filename, content] of Object.entries(templates)) {
       const filePath = path.join(knowledgeDir, filename);
@@ -178,92 +182,132 @@ This directory stores persistent project knowledge across all OMP sessions.
     return config;
   }
 
+  async function readKnowledgeFiles(knowledgeDir: string): Promise<string> {
+    let result = "";
+
+    async function scanDir(dir: string, relPath: string) {
+      if (!fs.existsSync(dir)) return;
+      const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        const fileRel = path.join(relPath, entry.name);
+
+        if (entry.isDirectory()) {
+          if (!entry.name.startsWith(".")) {
+            await scanDir(fullPath, fileRel);
+          }
+        } else if (entry.isFile() && entry.name.endsWith(".md") && entry.name !== "README.md") {
+          try {
+            const content = await fs.promises.readFile(fullPath, "utf-8");
+            const truncatedContent = content.length > 16000 ? `${content.slice(0, 16000)}\n\n[... truncated for prompt length ...]` : content;
+            result += `\n--- [FILE: .knowledge/${fileRel}] ---\n${truncatedContent}\n`;
+          } catch (e) {
+            pi.logger.warn(`Failed to read knowledge file ${fileRel}`, { error: String(e) });
+          }
+        }
+      }
+    }
+
+    await scanDir(knowledgeDir, "");
+    return result;
+  }
+
   // 1. Session Start: Ensure .knowledge/ structure exists
-  pi.on("session_start", async (_event, ctx) => {
+  pi.on("session_start", async (_event: SessionStartEvent, ctx: ExtensionContext) => {
     try {
-      const config = await initKnowledgeBase(ctx.cwd);
+      const cwd = getWorkspaceDir(ctx);
+      const config = await initKnowledgeBase(cwd);
       ctx.ui?.notify(`Pi Knowledge Harness Active [Mode: ${config.type.toUpperCase()}]`, "info");
     } catch (err) {
-      pi.logger.error("Failed to initialize Knowledge Base", err);
+      pi.logger.error("Failed to initialize Knowledge Base", { error: String(err) });
     }
   });
 
   // 2. Before Provider Request: Inject .knowledge/ documents into System Prompt
-  pi.on("before_provider_request", async (event) => {
-    const knowledgeDir = path.join(process.cwd(), ".knowledge");
+  pi.on("before_provider_request", async (event: BeforeProviderRequestEvent, ctx: ExtensionContext) => {
+    const cwd = getWorkspaceDir(ctx);
+    const knowledgeDir = path.join(cwd, ".knowledge");
     if (!fs.existsSync(knowledgeDir)) return;
 
     try {
       const config = await loadConfig(knowledgeDir);
-      const files = await fs.promises.readdir(knowledgeDir);
-      let aggregatedDocs = "";
+      const aggregatedDocs = await readKnowledgeFiles(knowledgeDir);
 
-      for (const file of files) {
-        if (file.endsWith(".md") && file !== "README.md") {
-          const content = await fs.promises.readFile(path.join(knowledgeDir, file), "utf-8");
-          aggregatedDocs += `\n--- [FILE: .knowledge/${file}] ---\n${content.slice(0, 2000)}\n`;
-        }
-      }
-
-      event.systemPrompt += `\n\n[PERSISTENT KNOWLEDGE BASE - Mode: ${config.type.toUpperCase()}]
+      if (aggregatedDocs.trim().length > 0 && isRecord(event.payload)) {
+        const knowledgePrompt = `\n\n[PERSISTENT KNOWLEDGE BASE - Mode: ${config.type.toUpperCase()}]
 You are backed by a persistent .knowledge/ base across sessions.
-- Always check and respect existing principles/data in .knowledge/ files.
-- When new insights, decisions, or conventions emerge during this session, explicitly note them so they can be persisted.
+- Always check and respect existing principles, decisions, and plans in .knowledge/ files.
+- When new insights, architectural decisions, or conventions emerge during this session, explicitly document or update them in .knowledge/ files.
 
 Active Knowledge Files:
 ${aggregatedDocs}
 `;
+
+        if (typeof event.payload.systemPrompt === "string") {
+          event.payload.systemPrompt += knowledgePrompt;
+        } else if (typeof event.payload.system === "string") {
+          event.payload.system += knowledgePrompt;
+        } else if (Array.isArray(event.payload.messages)) {
+          event.payload.messages.push({
+            role: "system",
+            content: knowledgePrompt,
+          });
+        }
+      }
     } catch (err) {
-      pi.logger.warn("Failed to inject knowledge context", err);
+      pi.logger.warn("Failed to inject knowledge context", { error: String(err) });
     }
+
+    return event.payload;
   });
 
   // 3. Track Session Tools Activity
-  pi.on("tool_result", async (event) => {
+  pi.on("tool_result", async (event: ToolResultEvent) => {
     const tool = event.toolName;
+    const timestamp = new Date().toLocaleTimeString();
+
     if (["write", "edit", "ast_edit"].includes(tool)) {
-      const pathArg = event.input?.path || (event.input?.paths ? event.input.paths.join(", ") : "file");
-      if (typeof pathArg === "string" && !pathArg.includes(".knowledge")) {
-        sessionActivities.push(`Modified file: \`${pathArg}\``);
+      let pathArg = "file";
+      if (isRecord(event.input)) {
+        if (typeof event.input.path === "string") {
+          pathArg = event.input.path;
+        } else if (Array.isArray(event.input.paths)) {
+          pathArg = event.input.paths.join(", ");
+        }
       }
+
+      if (!pathArg.includes(".knowledge")) {
+        sessionActivities.push({
+          timestamp,
+          type: "tool",
+          description: `Modified file: \`${pathArg}\` using tool \`${tool}\``,
+        });
+      }
+    } else if (tool === "bash") {
+      const cmd = isRecord(event.input) && typeof event.input.command === "string" ? event.input.command : "bash";
+      sessionActivities.push({
+        timestamp,
+        type: "tool",
+        description: `Executed command: \`${cmd}\``,
+      });
     } else if (tool === "web_search") {
-      sessionActivities.push(`Web Search: "${event.input?.query || "query"}"`);
-    } else if (tool === "read") {
-      const pathArg = event.input?.path;
-      if (typeof pathArg === "string" && !pathArg.includes(".knowledge")) {
-        sessionActivities.push(`Read: \`${pathArg}\``);
-      }
+      const query = isRecord(event.input) && typeof event.input.query === "string" ? event.input.query : "";
+      sessionActivities.push({
+        timestamp,
+        type: "tool",
+        description: `Web Search: "${query}"`,
+      });
     }
   });
 
-  // 4. Session Stop: Automatically write session summary to .knowledge/history/
-  pi.on("session_stop", async (_event, ctx) => {
-    if (sessionActivities.length === 0) return;
-
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const historyDir = path.join(ctx.cwd, ".knowledge", "history");
-    const historyFile = path.join(historyDir, `session-${timestamp}.md`);
-
-    const logContent = `# Session Activity Log (${new Date().toLocaleString()})
-
-## Actions Executed
-${sessionActivities.map((act) => `- ${act}`).join("\n")}
-`;
-
-    try {
-      await fs.promises.mkdir(historyDir, { recursive: true });
-      await fs.promises.writeFile(historyFile, logContent);
-      ctx.ui?.notify(`Persisted session activity to .knowledge/history/`, "info");
-    } catch (err) {
-      pi.logger.error("Failed to write session history log", err);
-    }
-  });
 
   // 5. Slash Command: /knowledge-sync
   pi.registerCommand("knowledge-sync", {
     description: "Sync current session activities and check .knowledge status",
-    handler: async (_args, ctx) => {
-      const knowledgeDir = path.join(ctx.cwd, ".knowledge");
+    handler: async (_args: string, ctx: ExtensionContext) => {
+      const cwd = getWorkspaceDir(ctx);
+      const knowledgeDir = path.join(cwd, ".knowledge");
       const config = await loadConfig(knowledgeDir);
       ctx.ui?.notify(
         `Knowledge Mode: ${config.type.toUpperCase()} | Tracked Activities: ${sessionActivities.length}`,
@@ -275,7 +319,7 @@ ${sessionActivities.map((act) => `- ${act}`).join("\n")}
   // 6. Slash Command: /knowledge-mode <mode>
   pi.registerCommand("knowledge-mode", {
     description: "Switch .knowledge domain mode (development | research | writing | general)",
-    handler: async (args, ctx) => {
+    handler: async (args: string, ctx: ExtensionContext) => {
       const targetMode = args.trim().toLowerCase() as KnowledgeType;
       const validModes: KnowledgeType[] = ["development", "research", "writing", "general"];
 
@@ -284,13 +328,14 @@ ${sessionActivities.map((act) => `- ${act}`).join("\n")}
         return;
       }
 
-      const knowledgeDir = path.join(ctx.cwd, ".knowledge");
+      const cwd = getWorkspaceDir(ctx);
+      const knowledgeDir = path.join(cwd, ".knowledge");
       const configPath = path.join(knowledgeDir, "config.yml");
 
       await fs.promises.mkdir(knowledgeDir, { recursive: true });
       await fs.promises.writeFile(configPath, `type: ${targetMode}\ntitle: ${targetMode.toUpperCase()} Knowledge Base\n`);
 
-      await initKnowledgeBase(ctx.cwd);
+      await initKnowledgeBase(cwd);
       ctx.ui?.notify(`Switched Knowledge Harness Mode to [${targetMode.toUpperCase()}]`, "info");
     },
   });
