@@ -5,7 +5,6 @@ node_modules/
 dist/
 
 # OMP session & local knowledge runtime outputs
-.knowledge/
 .omp/
 *.log
 

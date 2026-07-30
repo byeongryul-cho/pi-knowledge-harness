@@ -5,6 +5,7 @@ import type {
   SessionStartEvent,
   SessionStopEvent,
   ToolResultEvent,
+  TurnEndEvent,
 } from "@oh-my-pi/pi-coding-agent";
 import fs from "node:fs";
 import path from "node:path";
@@ -18,14 +19,40 @@ export interface KnowledgeConfig {
 
 interface ActivityEntry {
   timestamp: string;
-  type: "tool" | "input" | "decision";
+  tool: string;
+  target?: string;
   description: string;
 }
 
-function isRecord(val: unknown): val is Record<string, unknown> {
-  return typeof val === "object" && val !== null;
+function detectDomainType(cwd: string): KnowledgeType {
+  try {
+    const files = fs.readdirSync(cwd);
+    const hasCodeIndicator = files.some(f => 
+      ["package.json", "tsconfig.json", "cargo.toml", "go.mod", "pyproject.toml"].includes(f.toLowerCase()) ||
+      f.endsWith(".tf") ||
+      f === "src" ||
+      f === "shared"
+    );
+    if (hasCodeIndicator) return "development";
+
+    const hasResearchIndicator = files.some(f =>
+      ["paper", "thesis", "data", "notebooks"].includes(f.toLowerCase()) || f.endsWith(".ipynb")
+    );
+    if (hasResearchIndicator) return "research";
+
+    const hasWritingIndicator = files.some(f =>
+      ["drafts", "manuscript", "chapters", "articles"].includes(f.toLowerCase())
+    );
+    if (hasWritingIndicator) return "writing";
+  } catch (e) {
+    // Fallback to general on error
+  }
+  return "general";
 }
 
+// Unified Core Templates across all domains:
+// 01-plans.md: Tasks, Goals, and Completed Milestones
+// 02-changelog.md: Decisions, Findings, Draft Notes, and History
 const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
   development: {
     "00-conventions.md": `# Development Conventions
@@ -42,24 +69,24 @@ const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
 `,
     "01-plans.md": `# Development Plans & Tasks
 
-## 1. Current Phase
+## 1. Active Goal
 <!-- Active feature or milestone goal -->
 
 ## 2. In Progress
-- [ ] Task 1
+- [ ] Active Development Task
 
 ## 3. Backlog / Todo
-- [ ] Future improvement 1
+- [ ] Future backlog item
 
 ## 4. Completed
-- [x] Initial setup
+- [x] Initial workspace setup
 `,
     "02-changelog.md": `# Changelog & Architecture Decisions
 
 ## [Unreleased]
 
 ### Added
-- Initial workspace structure
+- Workspace initialization
 
 ### Changed
 
@@ -72,55 +99,86 @@ const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
   },
 
   research: {
-    "findings.md": `# Research Findings & Insights
+    "00-conventions.md": `# Research Methodology & Guidelines
+
+## 1. Principles
+- Maintain source citations and evidence-backed notes.
+`,
+    "01-plans.md": `# Research Plans & Hypotheses
+
+## 1. Active Goal
+<!-- Primary research objective -->
+
+## 2. In Progress
+- [ ] Active Hypothesis Test
+
+## 3. Backlog / Todo
+- [ ] Future experiment
+
+## 4. Completed
+- [x] Initial research setup
+`,
+    "02-changelog.md": `# Research Findings & Insights Log
 
 ## Key Takeaways
-- Insight 1
-
-## Literature & Resources
-- Resource 1
-`,
-    "hypotheses.md": `# Research Hypotheses & Experiments
-
-## Open Questions
-- Question 1
-
-## Experiments
-- [ ] Experiment 1
+- Initial findings established.
 `,
   },
 
   writing: {
-    "outline.md": `# Document Outline & Structure
+    "00-conventions.md": `# Writing Style & Guidelines
 
-## Section 1: Overview
-- Key point
-
-## Section 2: Main Content
+## 1. Tone & Voice
+- Clear, concise, and structured prose.
 `,
-    "drafts.md": `# Working Drafts & Working Notes
+    "01-plans.md": `# Writing Structure & Tasks
+
+## 1. Active Goal
+<!-- Document or article objective -->
+
+## 2. In Progress
+- [ ] Active Section Drafting
+
+## 3. Backlog / Todo
+- [ ] Future section
+
+## 4. Completed
+- [x] Initial outline created
+`,
+    "02-changelog.md": `# Working Drafts & Notes Log
+
+## Draft History
+- Initial structure created.
 `,
   },
 
   general: {
-    "decisions.md": `# Key Decisions (ADR)
+    "01-plans.md": `# Project Plans & Tasks
+
+## 1. Active Goal
+<!-- Main project objective -->
+
+## 2. In Progress
+- [ ] Active Task
+
+## 3. Backlog / Todo
+- [ ] Future task
+
+## 4. Completed
+- [x] Initial workspace setup
+`,
+    "02-changelog.md": `# Decisions & Change Log
 
 ## Decision Log
-- Initial architecture established.
-`,
-    "action-items.md": `# Action Items & To-Do Tracking
-
-## Active Tasks
-- [ ] Task 1
-
-## Completed
-- [x] Initial workspace setup
+- Initial architecture & conventions established.
 `,
   },
 };
 
 export default function piKnowledgeHarness(pi: ExtensionAPI) {
-  const sessionActivities: ActivityEntry[] = [];
+  let hasUnreflectedChanges = false;
+  let syncAttemptCount = 0;
+  const recentActivities: ActivityEntry[] = [];
 
   pi.setLabel("Pi Knowledge Harness");
 
@@ -156,13 +214,14 @@ export default function piKnowledgeHarness(pi: ExtensionAPI) {
 
     if (!fs.existsSync(knowledgeDir)) {
       await fs.promises.mkdir(knowledgeDir, { recursive: true });
-      const defaultConfig = `type: general\ntitle: Universal Knowledge Base\n`;
+      const detectedType = detectDomainType(cwd);
+      const defaultConfig = `type: ${detectedType}\ntitle: ${detectedType.toUpperCase()} Knowledge Base\n`;
       await fs.promises.writeFile(path.join(knowledgeDir, "config.yml"), defaultConfig);
 
-      const defaultReadme = `# Universal Knowledge Base
+      const defaultReadme = `# ${detectedType.toUpperCase()} Knowledge Base
 
 - **Created**: ${new Date().toISOString()}
-- **Mode**: General
+- **Mode**: ${detectedType}
 
 This directory stores persistent project knowledge across all OMP sessions.
 `;
@@ -224,22 +283,7 @@ This directory stores persistent project knowledge across all OMP sessions.
     }
   });
 
-  // 2. Before Provider Request: Inject .knowledge/ documents into System Prompt
-  function getDomainGuideline(type: KnowledgeType): string {
-    switch (type) {
-      case "development":
-        return "Every time you create skills, write code, make architectural decisions, or modify task status, continuously update .knowledge/ files (e.g., 01-plans.md, 02-changelog.md, 00-conventions.md, 03-troubleshooting.md).";
-      case "research":
-        return "Every time you uncover key insights, analyze sources, or test hypotheses, continuously update .knowledge/ files (e.g., findings.md, hypotheses.md, action-items.md).";
-      case "writing":
-        return "Every time you outline structures, refine drafts, or establish terminology, continuously update .knowledge/ files (e.g., outline.md, drafts.md).";
-      case "general":
-      default:
-        return "Every time you reach key decisions, define action items, or update task progress, continuously update .knowledge/ files (e.g., decisions.md, action-items.md).";
-    }
-  }
-
-  // 2. Before Provider Request: Inject .knowledge/ documents into System Prompt
+  // 2. Before Provider Request: Passively provide .knowledge/ context only
   pi.on("before_provider_request", async (event: BeforeProviderRequestEvent, ctx: ExtensionContext) => {
     const cwd = getWorkspaceDir(ctx);
     const knowledgeDir = path.join(cwd, ".knowledge");
@@ -249,36 +293,21 @@ This directory stores persistent project knowledge across all OMP sessions.
       const config = await loadConfig(knowledgeDir);
       const aggregatedDocs = await readKnowledgeFiles(knowledgeDir);
 
-      const unreflectedChanges = sessionActivities.filter(a => a.type === "tool");
-      const domainGuideline = getDomainGuideline(config.type);
-
-      if (isRecord(event.payload)) {
-        let knowledgePrompt = `\n\n[PERSISTENT KNOWLEDGE BASE - Mode: ${config.type.toUpperCase()}]
-You are backed by a persistent .knowledge/ base across sessions.
-- MANDATORY PRINCIPLE: ${domainGuideline}
-- CONTINUOUS WORKFLOW: NEVER yield or finish your turn without ensuring the active .knowledge/ base reflects all findings, decisions, outlines, or progress from this session.
-
-Active Knowledge Files:
+      if (typeof event.payload === "object" && event.payload !== null) {
+        const payload = event.payload as Record<string, unknown>;
+        const knowledgeContext = `\n\n[PERSISTENT KNOWLEDGE BASE - Mode: ${config.type.toUpperCase()}]
+Active Knowledge Base Documents:
 ${aggregatedDocs}
 `;
 
-        if (unreflectedChanges.length > 0) {
-          knowledgePrompt += `\n[UNREFLECTED SESSION ACTIVITIES DETECTED]
-You have performed ${unreflectedChanges.length} tool activities in this session:
-${unreflectedChanges.slice(-5).map(a => `- [${a.timestamp}] ${a.description}`).join("\n")}
-
-CRITICAL INSTRUCTION: Before completing your turn, YOU MUST IMMEDIATELY UPDATE the active .knowledge/ files so cross-session context is preserved regardless of domain (development, research, writing, general)!
-`;
-        }
-
-        if (typeof event.payload.systemPrompt === "string") {
-          event.payload.systemPrompt += knowledgePrompt;
-        } else if (typeof event.payload.system === "string") {
-          event.payload.system += knowledgePrompt;
-        } else if (Array.isArray(event.payload.messages)) {
-          event.payload.messages.push({
+        if (typeof payload.systemPrompt === "string") {
+          payload.systemPrompt += knowledgeContext;
+        } else if (typeof payload.system === "string") {
+          payload.system += knowledgeContext;
+        } else if (Array.isArray(payload.messages)) {
+          payload.messages.push({
             role: "system",
-            content: knowledgePrompt,
+            content: knowledgeContext,
           });
         }
       }
@@ -295,92 +324,84 @@ CRITICAL INSTRUCTION: Before completing your turn, YOU MUST IMMEDIATELY UPDATE t
     const timestamp = new Date().toLocaleTimeString();
 
     if (["write", "edit", "ast_edit"].includes(tool)) {
-      let pathArg = "file";
-      if (isRecord(event.input)) {
-        if (typeof event.input.path === "string") {
-          pathArg = event.input.path;
-        } else if (Array.isArray(event.input.paths)) {
-          pathArg = event.input.paths.join(", ");
+      let pathArg = "";
+      if (typeof event.input === "object" && event.input !== null) {
+        const inputObj = event.input as Record<string, unknown>;
+        if (typeof inputObj.path === "string") {
+          pathArg = inputObj.path;
+        } else if (Array.isArray(inputObj.paths)) {
+          pathArg = inputObj.paths.join(", ");
         }
       }
 
-      if (!pathArg.includes(".knowledge")) {
-        sessionActivities.push({
-          timestamp,
-          type: "tool",
-          description: `Modified file: \`${pathArg}\` using tool \`${tool}\``,
-        });
+      if (pathArg.includes(".knowledge")) {
+        // Agent updated .knowledge -> Reset sync flags
+        hasUnreflectedChanges = false;
+        syncAttemptCount = 0;
+        recentActivities.length = 0;
       } else {
-        // Clear pending unreflected activity warnings once agent updates .knowledge
-        sessionActivities.length = 0;
+        hasUnreflectedChanges = true;
+        recentActivities.push({
+          timestamp,
+          tool,
+          target: pathArg,
+          description: `Modified file \`${pathArg}\``,
+        });
       }
-    } else if (tool === "bash") {
-      const cmd = isRecord(event.input) && typeof event.input.command === "string" ? event.input.command : "bash";
-      sessionActivities.push({
+    } else if (["bash", "web_search"].includes(tool)) {
+      hasUnreflectedChanges = true;
+      recentActivities.push({
         timestamp,
-        type: "tool",
-        description: `Executed command: \`${cmd}\``,
-      });
-    } else if (tool === "web_search") {
-      const query = isRecord(event.input) && typeof event.input.query === "string" ? event.input.query : "";
-      sessionActivities.push({
-        timestamp,
-        type: "tool",
-        description: `Web Search: "${query}"`,
+        tool,
+        description: `Ran tool \`${tool}\``,
       });
     }
   });
 
+  // 4. Turn End Interception: Hard Gate via Steer Turn
+  pi.on("turn_end", async (_event: TurnEndEvent, ctx: ExtensionContext) => {
+    if (!hasUnreflectedChanges) return;
 
-  async function autoSyncKnowledgeBase(cwd: string) {
-    if (sessionActivities.length === 0) return;
+    if (syncAttemptCount >= 3) {
+      pi.logger.warn("Knowledge sync steer threshold reached (3 attempts). Bypassing to avoid infinite loop.");
+      return;
+    }
 
+    const cwd = getWorkspaceDir(ctx);
     const knowledgeDir = path.join(cwd, ".knowledge");
     if (!fs.existsSync(knowledgeDir)) return;
 
+    syncAttemptCount++;
+
+    const steerInstruction = `MANDATORY KNOWLEDGE UPDATE REQUIRED:
+You edited project files in this turn, but you have NOT updated .knowledge/ yet.
+
+BEFORE YIELDING TO THE USER:
+1. Execute an 'edit' or 'write' tool call on .knowledge/01-plans.md or .knowledge/02-changelog.md.
+2. Document high-level completed goals, architectural decisions, or status updates in human-readable terms.
+3. DO NOT list file paths or raw tool commands! Summarize the conceptual work and mark completed tasks [x].
+Execute the .knowledge/ edit tool NOW!`;
+
     try {
-      const config = await loadConfig(knowledgeDir);
-      const activitiesToSync = [...sessionActivities];
-      
-      let targetFile = "action-items.md";
-      if (config.type === "development") targetFile = "01-plans.md";
-      else if (config.type === "research") targetFile = "findings.md";
-      else if (config.type === "writing") targetFile = "drafts.md";
-
-      const filePath = path.join(knowledgeDir, targetFile);
-      if (fs.existsSync(filePath)) {
-        let content = await fs.promises.readFile(filePath, "utf-8");
-        const timestamp = new Date().toLocaleDateString();
-        
-        let appendContent = `\n\n### Auto-Synced Activities (${timestamp})\n`;
-        for (const act of activitiesToSync) {
-          appendContent += `- [x] ${act.description}\n`;
-        }
-
-        content += appendContent;
-        await fs.promises.writeFile(filePath, content, "utf-8");
-        sessionActivities.length = 0;
-      }
+      pi.sendUserMessage(steerInstruction, { deliverAs: "steer" });
     } catch (err) {
-      pi.logger.warn("Failed to auto-sync knowledge base", { error: String(err) });
+      pi.logger.error("Failed to deliver knowledge sync steer message", { error: String(err) });
     }
-  }
+  });
 
   // 5. Slash Command: /knowledge-sync
   pi.registerCommand("knowledge-sync", {
-    description: "Sync current session activities and update .knowledge files",
+    description: "Check status of .knowledge sync",
     handler: async (_args: string, ctx: ExtensionContext) => {
       const cwd = getWorkspaceDir(ctx);
       const knowledgeDir = path.join(cwd, ".knowledge");
       const config = await loadConfig(knowledgeDir);
-      const count = sessionActivities.length;
-      
-      await autoSyncKnowledgeBase(cwd);
 
-      ctx.ui?.notify(
-        `Knowledge Mode: ${config.type.toUpperCase()} | Synced ${count} Session Activities to .knowledge/`,
-        "info"
-      );
+      const statusMsg = hasUnreflectedChanges
+        ? `Knowledge Mode: ${config.type.toUpperCase()} | Pending unreflected changes (Steer attempts: ${syncAttemptCount}/3).`
+        : `Knowledge Mode: ${config.type.toUpperCase()} | All project changes reflected in .knowledge/`;
+
+      ctx.ui?.notify(statusMsg, hasUnreflectedChanges ? "warning" : "info");
     },
   });
 
@@ -408,13 +429,26 @@ CRITICAL INSTRUCTION: Before completing your turn, YOU MUST IMMEDIATELY UPDATE t
     },
   });
 
-  // 7. Session Stop: Automatically safety-net sync any unreflected session activities
+  // 7. Session Stop: Safety net logging if unreflected changes remain
   pi.on("session_stop", async (_event: SessionStopEvent, ctx: ExtensionContext) => {
+    if (!hasUnreflectedChanges) return;
+
+    const cwd = getWorkspaceDir(ctx);
+    const knowledgeDir = path.join(cwd, ".knowledge");
+    if (!fs.existsSync(knowledgeDir)) return;
+
     try {
-      const cwd = getWorkspaceDir(ctx);
-      await autoSyncKnowledgeBase(cwd);
+      const filePath = path.join(knowledgeDir, "01-plans.md");
+      if (fs.existsSync(filePath)) {
+        let content = await fs.promises.readFile(filePath, "utf-8");
+        const timestamp = new Date().toLocaleDateString();
+
+        const appendNotice = `\n\n<!-- Unreflected Session Activity Detected (${timestamp}) -->\n<!-- Note: Session closed before agent completed .knowledge sync. Please review and update. -->\n`;
+        content += appendNotice;
+        await fs.promises.writeFile(filePath, content, "utf-8");
+      }
     } catch (err) {
-      pi.logger.error("Failed to auto-sync Knowledge Base on session stop", { error: String(err) });
+      pi.logger.warn("Failed to update safety net on session stop", { error: String(err) });
     }
   });
 }
