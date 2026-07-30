@@ -1,16 +1,15 @@
 # Development Plans & Milestones
 
-## 1. Active Goal
+## Active Goal
 - Steer Turn Interception Architecture & Unified Knowledge Base Naming Schema
 
-## 2. In Progress
+## In Progress
 - [ ] Multi-session context compression and summarization enhancements
 
-## 3. Backlog / Todo
+## Backlog / Todo
 - [ ] Support custom domain template overrides per project
 - [ ] Add CLI flag for disabling knowledge harness per-session
-
-## 4. Completed
+## Completed
 - [x] Initial extension scaffold and event hooks
 - [x] Auto-domain detection for `development`, `research`, `writing`, and `general` modes
 - [x] Purge raw file-list dumping from `autoSyncKnowledgeBase`
@@ -27,4 +26,8 @@
 - [x] Purge obsolete /knowledge-sync slash command and references across codebase and documentation
 - [x] Remove file modification safety net from session_stop event handler to prevent comment clutter in plans
 - [x] Complete codebase review and purge dead code (`recentActivities`), fix path boundary checks for `.knowledge`
+- [x] Remove `.knowledge/README.md` boilerplate generation on project initialization
+- [x] Introduce `00-overview.md` index template across all domain modes with automatic project metadata extraction (`package.json`, `pyproject.toml`, `Cargo.toml`)
+- [x] Include `.knowledge/00-overview.md` in steer turn interception instructions so agents enrich overview context
+- [x] Remove numeric prefixes (`00-`, `01-`, `02-`, etc.) from all Knowledge document filenames and headings (`overview.md`, `conventions.md`, `plans.md`, `changelog.md`, `troubleshooting.md`, `architecture.md`)
 

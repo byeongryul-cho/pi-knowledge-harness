@@ -44,38 +44,89 @@ function detectDomainType(cwd: string): KnowledgeType {
   return "general";
 }
 
+function getProjectMetadata(cwd: string): { name: string; description: string } {
+  let name = path.basename(cwd);
+  let description = "Workspace project managed by Pi Knowledge Harness.";
+
+  try {
+    const pkgPath = path.join(cwd, "package.json");
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+      if (pkg.name) name = pkg.name;
+      if (pkg.description) description = pkg.description;
+      return { name, description };
+    }
+
+    const pyPath = path.join(cwd, "pyproject.toml");
+    if (fs.existsSync(pyPath)) {
+      const content = fs.readFileSync(pyPath, "utf-8");
+      const nameMatch = content.match(/name\s*=\s*["']([^"']+)["']/);
+      const descMatch = content.match(/description\s*=\s*["']([^"']+)["']/);
+      if (nameMatch) name = nameMatch[1];
+      if (descMatch) description = descMatch[1];
+      return { name, description };
+    }
+
+    const cargoPath = path.join(cwd, "Cargo.toml");
+    if (fs.existsSync(cargoPath)) {
+      const content = fs.readFileSync(cargoPath, "utf-8");
+      const nameMatch = content.match(/name\s*=\s*["']([^"']+)["']/);
+      const descMatch = content.match(/description\s*=\s*["']([^"']+)["']/);
+      if (nameMatch) name = nameMatch[1];
+      if (descMatch) description = descMatch[1];
+      return { name, description };
+    }
+  } catch (e) {
+    // Fallback on parse error
+  }
+
+  return { name, description };
+}
+
 // Unified Core Templates across all domains:
 // 01-plans.md: Tasks, Goals, and Completed Milestones
 // 02-changelog.md: Decisions, Findings, Draft Notes, and History
 const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
   development: {
-    "00-conventions.md": `# Development Conventions
+    "overview.md": `# Project Overview & Index
 
-## 1. General Principles
+## Summary
+- **Project Name**: {{NAME}}
+- **Description**: {{DESCRIPTION}}
+
+## Core Purpose & Scope
+<!-- High-level project purpose, objectives, and domain boundaries -->
+
+## Key Stack & Concepts
+<!-- Key technologies, modules, or core domain concepts -->
+`,
+    "conventions.md": `# Development Conventions
+
+## General Principles
 - **NO EMOJI**: Do not use emojis in commit messages, code, comments, or documentation.
 
-## 2. Git Commit Convention
+## Git Commit Convention
 - Format: \`<type>(<scope>): <subject>\`
 - Types: \`feat\`, \`fix\`, \`docs\`, \`style\`, \`refactor\`, \`test\`, \`chore\`
 
-## 3. Code Style & Architecture
+## Code Style & Architecture
 - Maintain clean module separation, type safety, and robust error handling.
 `,
-    "01-plans.md": `# Development Plans & Tasks
+    "plans.md": `# Development Plans & Tasks
 
-## 1. Active Goal
+## Active Goal
 <!-- Active feature or milestone goal -->
 
-## 2. In Progress
+## In Progress
 - [ ] Active Development Task
 
-## 3. Backlog / Todo
+## Backlog / Todo
 - [ ] Future backlog item
 
-## 4. Completed
+## Completed
 - [x] Initial workspace setup
 `,
-    "02-changelog.md": `# Changelog & Architecture Decisions
+    "changelog.md": `# Changelog & Architecture Decisions
 
 ## [Unreleased]
 
@@ -86,44 +137,53 @@ const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
 
 ### Fixed
 `,
-    "03-troubleshooting.md": `# Troubleshooting Log
+    "troubleshooting.md": `# Troubleshooting Log
 
 <!-- Document resolved bugs and issues -->
 `,
-    "04-architecture.md": `# Project Architecture & System Design
+    "architecture.md": `# Project Architecture & System Design
 
-## 1. System Overview
+## System Overview
 <!-- High-level description of system architecture and responsibilities -->
 
-## 2. Directory & Module Layout
+## Directory & Module Layout
 <!-- Module organization, folder structure, and entry points -->
 
-## 3. Core Technical Patterns & Data Flow
+## Core Technical Patterns & Data Flow
 <!-- Design patterns, key data flows, and subsystem integrations -->
 `,
   },
 
   research: {
-    "00-conventions.md": `# Research Methodology & Guidelines
+    "overview.md": `# Research Overview & Index
 
-## 1. Principles
+## Summary
+- **Project Name**: {{NAME}}
+- **Description**: {{DESCRIPTION}}
+
+## Research Scope & Objectives
+<!-- High-level research purpose and core domain questions -->
+`,
+    "conventions.md": `# Research Methodology & Guidelines
+
+## Principles
 - Maintain source citations and evidence-backed notes.
 `,
-    "01-plans.md": `# Research Plans & Hypotheses
+    "plans.md": `# Research Plans & Hypotheses
 
-## 1. Active Goal
+## Active Goal
 <!-- Primary research objective -->
 
-## 2. In Progress
+## In Progress
 - [ ] Active Hypothesis Test
 
-## 3. Backlog / Todo
+## Backlog / Todo
 - [ ] Future experiment
 
-## 4. Completed
+## Completed
 - [x] Initial research setup
 `,
-    "02-changelog.md": `# Research Findings & Insights Log
+    "changelog.md": `# Research Findings & Insights Log
 
 ## Key Takeaways
 - Initial findings established.
@@ -131,26 +191,35 @@ const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
   },
 
   writing: {
-    "00-conventions.md": `# Writing Style & Guidelines
+    "overview.md": `# Manuscript Overview & Index
 
-## 1. Tone & Voice
+## Summary
+- **Project Name**: {{NAME}}
+- **Description**: {{DESCRIPTION}}
+
+## Document Purpose & Structure
+<!-- High-level manuscript scope and target audience -->
+`,
+    "conventions.md": `# Writing Style & Guidelines
+
+## Tone & Voice
 - Clear, concise, and structured prose.
 `,
-    "01-plans.md": `# Writing Structure & Tasks
+    "plans.md": `# Writing Structure & Tasks
 
-## 1. Active Goal
+## Active Goal
 <!-- Document or article objective -->
 
-## 2. In Progress
+## In Progress
 - [ ] Active Section Drafting
 
-## 3. Backlog / Todo
+## Backlog / Todo
 - [ ] Future section
 
-## 4. Completed
+## Completed
 - [x] Initial outline created
 `,
-    "02-changelog.md": `# Working Drafts & Notes Log
+    "changelog.md": `# Working Drafts & Notes Log
 
 ## Draft History
 - Initial structure created.
@@ -158,61 +227,75 @@ const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
   },
 
   general: {
-    "01-plans.md": `# Project Plans & Tasks
+    "overview.md": `# Project Overview & Index
 
-## 1. Active Goal
+## Summary
+- **Project Name**: {{NAME}}
+- **Description**: {{DESCRIPTION}}
+
+## Core Purpose & Objectives
+<!-- Project overview, scope, and key objectives -->
+`,
+    "plans.md": `# Project Plans & Tasks
+
+## Active Goal
 <!-- Main project objective -->
 
-## 2. In Progress
+## In Progress
 - [ ] Active Task
 
-## 3. Backlog / Todo
+## Backlog / Todo
 - [ ] Future task
 
-## 4. Completed
+## Completed
 - [x] Initial workspace setup
 `,
-    "02-changelog.md": `# Decisions & Change Log
+    "changelog.md": `# Decisions & Change Log
 
 ## Decision Log
 - Initial architecture & conventions established.
 `,
   },
 };
+
 const AGENTS_TEMPLATES: Record<KnowledgeType, string> = {
   development: `# AGENTS.md
 
 This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively in the recommended priority order below:
 
-1. **Conventions & Code Style**: [.knowledge/00-conventions.md](.knowledge/00-conventions.md) — Read first for coding standards, git conventions, and core principles.
-2. **Architecture & System Design**: [.knowledge/04-architecture.md](.knowledge/04-architecture.md) — Read to understand module boundaries, directory layout, and data flow.
-3. **Active Plans & Tasks**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read for active goals and backlog; update tasks upon completion.
-4. **Changelog & History**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult for historical decisions and architectural changes.
-5. **Troubleshooting & Known Issues**: [.knowledge/03-troubleshooting.md](.knowledge/03-troubleshooting.md) — Consult when investigating or resolving complex bugs.
+- **Project Overview & Index**: [.knowledge/overview.md](.knowledge/overview.md) — Read first for project overview, core purpose, and key stack.
+- **Conventions & Code Style**: [.knowledge/conventions.md](.knowledge/conventions.md) — Read for coding standards, git conventions, and core principles.
+- **Architecture & System Design**: [.knowledge/architecture.md](.knowledge/architecture.md) — Read to understand module boundaries, directory layout, and data flow.
+- **Active Plans & Tasks**: [.knowledge/plans.md](.knowledge/plans.md) — Read for active goals and backlog; update tasks upon completion.
+- **Changelog & History**: [.knowledge/changelog.md](.knowledge/changelog.md) — Consult for historical decisions and architectural changes.
+- **Troubleshooting & Known Issues**: [.knowledge/troubleshooting.md](.knowledge/troubleshooting.md) — Consult when investigating or resolving complex bugs.
 `,
   research: `# AGENTS.md
 
 This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively in the recommended priority order below:
 
-1. **Research Methodology & Guidelines**: [.knowledge/00-conventions.md](.knowledge/00-conventions.md) — Read first for research standards and citation rules.
-2. **Research Plans & Hypotheses**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read for active research goals; update tasks upon completion.
-3. **Findings & Insights Log**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult and update when documenting new findings and conclusions.
+- **Project Overview & Index**: [.knowledge/overview.md](.knowledge/overview.md) — Read first for research scope, objectives, and domain overview.
+- **Research Methodology & Guidelines**: [.knowledge/conventions.md](.knowledge/conventions.md) — Read for research standards and citation rules.
+- **Research Plans & Hypotheses**: [.knowledge/plans.md](.knowledge/plans.md) — Read for active research goals; update tasks upon completion.
+- **Findings & Insights Log**: [.knowledge/changelog.md](.knowledge/changelog.md) — Consult and update when documenting new findings and conclusions.
 `,
   writing: `# AGENTS.md
 
 This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively in the recommended priority order below:
 
-1. **Writing Style & Guidelines**: [.knowledge/00-conventions.md](.knowledge/00-conventions.md) — Read first for tone, style, and structure guidelines.
-2. **Writing Structure & Tasks**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read for outline and draft milestones; update as sections complete.
-3. **Working Drafts & Notes Log**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult and update when making draft notes and version changes.
+- **Project Overview & Index**: [.knowledge/overview.md](.knowledge/overview.md) — Read first for manuscript/document scope and overall structure.
+- **Writing Style & Guidelines**: [.knowledge/conventions.md](.knowledge/conventions.md) — Read for tone, style, and structure guidelines.
+- **Writing Structure & Tasks**: [.knowledge/plans.md](.knowledge/plans.md) — Read for outline and draft milestones; update as sections complete.
+- **Working Drafts & Notes Log**: [.knowledge/changelog.md](.knowledge/changelog.md) — Consult and update when making draft notes and version changes.
 `,
   general: `# AGENTS.md
 
 This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively in the recommended priority order below:
 
-1. **Project Plans & Tasks**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read first for active goals; update tasks upon completion.
-2. **Decisions & Change Log**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult for key project decisions; update when recording change logs.
-`,
+- **Project Overview & Index**: [.knowledge/overview.md](.knowledge/overview.md) — Read first for project overview, scope, and key objectives.
+- **Project Plans & Tasks**: [.knowledge/plans.md](.knowledge/plans.md) — Read for active goals; update tasks upon completion.
+- **Decisions & Change Log**: [.knowledge/changelog.md](.knowledge/changelog.md) — Consult for key project decisions; update when recording change logs.
+`
 };
 
 export default function piKnowledgeHarness(pi: ExtensionAPI) {
@@ -257,22 +340,18 @@ export default function piKnowledgeHarness(pi: ExtensionAPI) {
       const defaultConfig = `type: ${detectedType}\ntitle: ${detectedType.toUpperCase()} Knowledge Base\n`;
       await fs.promises.writeFile(path.join(knowledgeDir, "config.yml"), defaultConfig);
 
-      const defaultReadme = `# ${detectedType.toUpperCase()} Knowledge Base
-
-- **Created**: ${new Date().toISOString()}
-- **Mode**: ${detectedType}
-
-This directory stores persistent project knowledge across all OMP sessions.
-`;
-      await fs.promises.writeFile(path.join(knowledgeDir, "README.md"), defaultReadme);
     }
 
     const config = await loadConfig(knowledgeDir);
 
+    const metadata = getProjectMetadata(cwd);
     const templates = DOMAIN_TEMPLATES[config.type] || {};
-    for (const [filename, content] of Object.entries(templates)) {
+    for (const [filename, rawContent] of Object.entries(templates)) {
       const filePath = path.join(knowledgeDir, filename);
       if (!fs.existsSync(filePath)) {
+        const content = rawContent
+          .replace("{{NAME}}", metadata.name)
+          .replace("{{DESCRIPTION}}", metadata.description);
         await fs.promises.writeFile(filePath, content);
       }
     }
@@ -411,7 +490,7 @@ ${aggregatedDocs}
 You edited project files in this turn, but you have NOT updated .knowledge/ yet.
 
 BEFORE YIELDING TO THE USER:
-1. Execute an 'edit' or 'write' tool call on .knowledge/01-plans.md or .knowledge/02-changelog.md.
+1. Execute an 'edit' or 'write' tool call on .knowledge/ (e.g. overview.md, plans.md, or changelog.md).
 2. Document high-level completed goals, architectural decisions, or status updates in human-readable terms.
 3. DO NOT list file paths or raw tool commands! Summarize the conceptual work and mark completed tasks [x].
 Execute the .knowledge/ edit tool NOW!`;

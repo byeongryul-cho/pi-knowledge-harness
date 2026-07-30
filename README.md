@@ -7,10 +7,10 @@
 
 - Cross-Session Knowledge Persistence: Automatically maintains project context in a `.knowledge/` directory.
 - 4 Domain Modes:
-  - `development`: Conventions (`00-conventions.md`), plans (`01-plans.md`), changelog (`02-changelog.md`), troubleshooting (`03-troubleshooting.md`), architecture (`04-architecture.md`).
-  - `research`: Key findings (`findings.md`), reference sources (`sources.md`).
-  - `writing`: Tone & style guide (`style-guide.md`), glossary (`glossary.md`), outline (`outline.md`).
-  - `general`: Key decisions (`decisions.md`), action items (`action-items.md`).
+  - `development`: Index (`overview.md`), Conventions (`conventions.md`), plans (`plans.md`), changelog (`changelog.md`), troubleshooting (`troubleshooting.md`), architecture (`architecture.md`).
+  - `research`: Index (`overview.md`), Conventions (`conventions.md`), plans (`plans.md`), changelog (`changelog.md`).
+  - `writing`: Index (`overview.md`), Guidelines (`conventions.md`), plans (`plans.md`), changelog (`changelog.md`).
+  - `general`: Index (`overview.md`), plans (`plans.md`), changelog (`changelog.md`).
 - Auto Context Injection: Inject `.knowledge/` documents into the LLM system prompt before every request.
 - Automatic Activity Logging: Tracks modified files, searches, and reads, appending session summaries to `.knowledge/history/`.
 - Non-Destructive Mode Switching: Switching modes adds new missing templates without overwriting existing data.
