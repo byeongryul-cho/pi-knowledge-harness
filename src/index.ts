@@ -332,15 +332,53 @@ CRITICAL INSTRUCTION: Before completing your turn, YOU MUST IMMEDIATELY UPDATE t
   });
 
 
+  async function autoSyncKnowledgeBase(cwd: string) {
+    if (sessionActivities.length === 0) return;
+
+    const knowledgeDir = path.join(cwd, ".knowledge");
+    if (!fs.existsSync(knowledgeDir)) return;
+
+    try {
+      const config = await loadConfig(knowledgeDir);
+      const activitiesToSync = [...sessionActivities];
+      
+      let targetFile = "action-items.md";
+      if (config.type === "development") targetFile = "01-plans.md";
+      else if (config.type === "research") targetFile = "findings.md";
+      else if (config.type === "writing") targetFile = "drafts.md";
+
+      const filePath = path.join(knowledgeDir, targetFile);
+      if (fs.existsSync(filePath)) {
+        let content = await fs.promises.readFile(filePath, "utf-8");
+        const timestamp = new Date().toLocaleDateString();
+        
+        let appendContent = `\n\n### Auto-Synced Activities (${timestamp})\n`;
+        for (const act of activitiesToSync) {
+          appendContent += `- [x] ${act.description}\n`;
+        }
+
+        content += appendContent;
+        await fs.promises.writeFile(filePath, content, "utf-8");
+        sessionActivities.length = 0;
+      }
+    } catch (err) {
+      pi.logger.warn("Failed to auto-sync knowledge base", { error: String(err) });
+    }
+  }
+
   // 5. Slash Command: /knowledge-sync
   pi.registerCommand("knowledge-sync", {
-    description: "Sync current session activities and check .knowledge status",
+    description: "Sync current session activities and update .knowledge files",
     handler: async (_args: string, ctx: ExtensionContext) => {
       const cwd = getWorkspaceDir(ctx);
       const knowledgeDir = path.join(cwd, ".knowledge");
       const config = await loadConfig(knowledgeDir);
+      const count = sessionActivities.length;
+      
+      await autoSyncKnowledgeBase(cwd);
+
       ctx.ui?.notify(
-        `Knowledge Mode: ${config.type.toUpperCase()} | Tracked Activities: ${sessionActivities.length}`,
+        `Knowledge Mode: ${config.type.toUpperCase()} | Synced ${count} Session Activities to .knowledge/`,
         "info"
       );
     },
@@ -368,5 +406,15 @@ CRITICAL INSTRUCTION: Before completing your turn, YOU MUST IMMEDIATELY UPDATE t
       await initKnowledgeBase(cwd);
       ctx.ui?.notify(`Switched Knowledge Harness Mode to [${targetMode.toUpperCase()}]`, "info");
     },
+  });
+
+  // 7. Session Stop: Automatically safety-net sync any unreflected session activities
+  pi.on("session_stop", async (_event: SessionStopEvent, ctx: ExtensionContext) => {
+    try {
+      const cwd = getWorkspaceDir(ctx);
+      await autoSyncKnowledgeBase(cwd);
+    } catch (err) {
+      pi.logger.error("Failed to auto-sync Knowledge Base on session stop", { error: String(err) });
+    }
   });
 }
