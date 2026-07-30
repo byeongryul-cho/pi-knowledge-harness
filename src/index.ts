@@ -174,6 +174,40 @@ const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
 `,
   },
 };
+const AGENTS_TEMPLATES: Record<KnowledgeType, string> = {
+  development: `# Agent Guidelines (AGENTS.md)
+
+This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively using the linked files below:
+
+- **Conventions & Code Style**: [.knowledge/00-conventions.md](.knowledge/00-conventions.md) — Read first for coding standards, git conventions, and design principles.
+- **Active Plans & Tasks**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read for current goals; update tasks upon completion.
+- **Changelog & Architecture Decisions**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult for major decisions; update when adding features or refactoring.
+- **Troubleshooting & Known Issues**: [.knowledge/03-troubleshooting.md](.knowledge/03-troubleshooting.md) — Consult when investigating or resolving complex bugs.
+`,
+  research: `# Agent Guidelines (AGENTS.md)
+
+This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively using the linked files below:
+
+- **Research Methodology & Guidelines**: [.knowledge/00-conventions.md](.knowledge/00-conventions.md) — Read first for research standards and citation rules.
+- **Research Plans & Hypotheses**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read for active research goals; update tasks upon completion.
+- **Findings & Insights Log**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult and update when documenting new findings and conclusions.
+`,
+  writing: `# Agent Guidelines (AGENTS.md)
+
+This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively using the linked files below:
+
+- **Writing Style & Guidelines**: [.knowledge/00-conventions.md](.knowledge/00-conventions.md) — Read first for tone, style, and structure guidelines.
+- **Writing Structure & Tasks**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read for outline and draft milestones; update as sections complete.
+- **Working Drafts & Notes Log**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult and update when making draft notes and version changes.
+`,
+  general: `# Agent Guidelines (AGENTS.md)
+
+This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively using the linked files below:
+
+- **Project Plans & Tasks**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read for active goals; update tasks upon completion.
+- **Decisions & Change Log**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult for key project decisions; update when recording change logs.
+`,
+};
 
 export default function piKnowledgeHarness(pi: ExtensionAPI) {
   let hasUnreflectedChanges = false;
@@ -238,6 +272,12 @@ This directory stores persistent project knowledge across all OMP sessions.
       }
     }
 
+    // Ensure AGENTS.md exists at project root
+    const agentsPath = path.join(cwd, "AGENTS.md");
+    if (!fs.existsSync(agentsPath)) {
+      const agentsTemplate = AGENTS_TEMPLATES[config.type] || AGENTS_TEMPLATES.general;
+      await fs.promises.writeFile(agentsPath, agentsTemplate);
+    }
     return config;
   }
 

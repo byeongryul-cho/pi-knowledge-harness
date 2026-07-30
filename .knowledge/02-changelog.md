@@ -12,10 +12,13 @@
 ### Added
 - Standardized document templates across all domain modes (`development`, `research`, `writing`, `general`).
 - `detectDomainType` workspace analysis.
+- Automatic AGENTS.md template generation at project root based on detected domain mode during initial workspace setup.
 
 ### Changed
 - Replaced ambiguous `Current Phase 2` headings with `1. Active Goal`.
 - Unified `action-items.md` into `01-plans.md`.
+- Refactored AGENTS.md template format to use markdown links to .knowledge/ documents and progressive context loading protocols instead of inline instructions.
+- Consolidated AGENTS.md template into a single, concise list integrating document links and usage triggers.
 
 ### Fixed
 - Fixed issue where agent yielded response without updating `.knowledge/` documents.

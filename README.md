@@ -14,6 +14,7 @@
 - Auto Context Injection: Inject `.knowledge/` documents into the LLM system prompt before every request.
 - Automatic Activity Logging: Tracks modified files, searches, and reads, appending session summaries to `.knowledge/history/`.
 - Non-Destructive Mode Switching: Switching modes adds new missing templates without overwriting existing data.
+- Automatic Agent Guidelines Setup: Automatically generates `AGENTS.md` at project root with domain-specific agent instructions.
 
 ## Installation
 
@@ -51,7 +52,7 @@ pi plugin install https://github.com/byeongryul-cho/pi-knowledge-harness
 
 ## Usage & Slash Commands
 
-Once installed, the extension automatically activates on session startup and creates `.knowledge/` in your workspace.
+Once installed, the extension automatically activates on session startup, creating `.knowledge/` and `AGENTS.md` in your workspace.
 
 - `/knowledge-sync`: View current knowledge mode and tracked session activities.
 - `/knowledge-mode <mode>`: Switch domain mode on the fly (`development`, `research`, `writing`, `general`).
