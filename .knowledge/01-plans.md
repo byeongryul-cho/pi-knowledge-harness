@@ -21,6 +21,11 @@
 - [x] Automatic AGENTS.md template generation on initial workspace setup
 - [x] Refactor AGENTS.md structure to use progressive context loading protocol and markdown links to .knowledge/ files
 - [x] Simplify AGENTS.md format to a single unified list combining knowledge links and usage context
+- [x] Change AGENTS.md document title heading from '# Agent Guidelines (AGENTS.md)' to '# AGENTS.md'
+
+
+<!-- Unreflected Session Activity Detected (7/31/2026) -->
+<!-- Note: Session closed before agent completed .knowledge sync. Please review and update. -->
 
 
 <!-- Unreflected Session Activity Detected (7/31/2026) -->

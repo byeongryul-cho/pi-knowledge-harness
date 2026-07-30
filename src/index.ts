@@ -175,7 +175,7 @@ const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
   },
 };
 const AGENTS_TEMPLATES: Record<KnowledgeType, string> = {
-  development: `# Agent Guidelines (AGENTS.md)
+  development: `# AGENTS.md
 
 This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively using the linked files below:
 
@@ -184,7 +184,7 @@ This project uses a persistent knowledge base in \`.knowledge/\`. Load context p
 - **Changelog & Architecture Decisions**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult for major decisions; update when adding features or refactoring.
 - **Troubleshooting & Known Issues**: [.knowledge/03-troubleshooting.md](.knowledge/03-troubleshooting.md) — Consult when investigating or resolving complex bugs.
 `,
-  research: `# Agent Guidelines (AGENTS.md)
+  research: `# AGENTS.md
 
 This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively using the linked files below:
 
@@ -192,7 +192,7 @@ This project uses a persistent knowledge base in \`.knowledge/\`. Load context p
 - **Research Plans & Hypotheses**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read for active research goals; update tasks upon completion.
 - **Findings & Insights Log**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult and update when documenting new findings and conclusions.
 `,
-  writing: `# Agent Guidelines (AGENTS.md)
+  writing: `# AGENTS.md
 
 This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively using the linked files below:
 
@@ -200,7 +200,7 @@ This project uses a persistent knowledge base in \`.knowledge/\`. Load context p
 - **Writing Structure & Tasks**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read for outline and draft milestones; update as sections complete.
 - **Working Drafts & Notes Log**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult and update when making draft notes and version changes.
 `,
-  general: `# Agent Guidelines (AGENTS.md)
+  general: `# AGENTS.md
 
 This project uses a persistent knowledge base in \`.knowledge/\`. Load context progressively using the linked files below:
 

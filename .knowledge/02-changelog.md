@@ -19,6 +19,7 @@
 - Unified `action-items.md` into `01-plans.md`.
 - Refactored AGENTS.md template format to use markdown links to .knowledge/ documents and progressive context loading protocols instead of inline instructions.
 - Consolidated AGENTS.md template into a single, concise list integrating document links and usage triggers.
+- Updated AGENTS.md title heading to '# AGENTS.md'.
 
 ### Fixed
 - Fixed issue where agent yielded response without updating `.knowledge/` documents.

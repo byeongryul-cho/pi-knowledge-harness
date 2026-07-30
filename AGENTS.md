@@ -1,4 +1,4 @@
-# Agent Guidelines (AGENTS.md)
+# AGENTS.md
 
 This project uses a persistent knowledge base in `.knowledge/`. Load context progressively using the linked files below:
 
