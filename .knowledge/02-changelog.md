@@ -22,6 +22,7 @@
 - Consolidated AGENTS.md template into a single, concise list integrating document links and usage triggers.
 - Updated AGENTS.md title heading to '# AGENTS.md'.
 - Reordered AGENTS.md document links as a numbered priority list to guide sequential context loading.
+- Removed obsolete /knowledge-sync command superseded by automatic steer turn interception.
 
 ### Fixed
 - Fixed issue where agent yielded response without updating `.knowledge/` documents.

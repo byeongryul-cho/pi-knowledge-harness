@@ -441,21 +441,6 @@ Execute the .knowledge/ edit tool NOW!`;
     }
   });
 
-  // 5. Slash Command: /knowledge-sync
-  pi.registerCommand("knowledge-sync", {
-    description: "Check status of .knowledge sync",
-    handler: async (_args: string, ctx: ExtensionContext) => {
-      const cwd = getWorkspaceDir(ctx);
-      const knowledgeDir = path.join(cwd, ".knowledge");
-      const config = await loadConfig(knowledgeDir);
-
-      const statusMsg = hasUnreflectedChanges
-        ? `Knowledge Mode: ${config.type.toUpperCase()} | Pending unreflected changes (Steer attempts: ${syncAttemptCount}/3).`
-        : `Knowledge Mode: ${config.type.toUpperCase()} | All project changes reflected in .knowledge/`;
-
-      ctx.ui?.notify(statusMsg, hasUnreflectedChanges ? "warning" : "info");
-    },
-  });
 
   // 6. Slash Command: /knowledge-mode <mode>
   pi.registerCommand("knowledge-mode", {

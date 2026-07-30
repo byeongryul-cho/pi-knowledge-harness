@@ -24,6 +24,11 @@
 - [x] Change AGENTS.md document title heading from '# Agent Guidelines (AGENTS.md)' to '# AGENTS.md'
 - [x] Add 04-architecture.md template for development domain and link in AGENTS.md
 - [x] Order AGENTS.md document links as a numbered priority list (Conventions -> Architecture -> Plans -> Changelog -> Troubleshooting)
+- [x] Purge obsolete /knowledge-sync slash command and references across codebase and documentation
+
+
+<!-- Unreflected Session Activity Detected (7/31/2026) -->
+<!-- Note: Session closed before agent completed .knowledge sync. Please review and update. -->
 
 
 <!-- Unreflected Session Activity Detected (7/31/2026) -->

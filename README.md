@@ -54,7 +54,6 @@ pi plugin install https://github.com/byeongryul-cho/pi-knowledge-harness
 
 Once installed, the extension automatically activates on session startup, creating `.knowledge/` and `AGENTS.md` in your workspace.
 
-- `/knowledge-sync`: View current knowledge mode and tracked session activities.
 - `/knowledge-mode <mode>`: Switch domain mode on the fly (`development`, `research`, `writing`, `general`).
 
 ```text

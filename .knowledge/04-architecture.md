@@ -16,5 +16,4 @@ It maintains persistent project context in `.knowledge/` and enforces active kno
 - **Activity Tracking (`tool_result`)**: Tracks workspace modifications (`write`, `edit`, `ast_edit`, `bash`, `web_search`). Reset when `.knowledge/` edits are detected; otherwise flags unreflected changes.
 - **Hard Steer Interception (`turn_end`)**: Intercepts turn completion when workspace edits remain unreflected, sending a steering message via `pi.sendUserMessage(..., { deliverAs: "steer" })` up to a latch limit (3 retries) to prevent loops.
 - **Slash Commands**:
-  - `/knowledge-sync`: Reports status of pending unreflected changes and active mode.
   - `/knowledge-mode <mode>`: Dynamically switches domain modes and provisions new domain templates.
