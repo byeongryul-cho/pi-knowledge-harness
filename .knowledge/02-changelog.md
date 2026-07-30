@@ -13,6 +13,7 @@
 - Standardized document templates across all domain modes (`development`, `research`, `writing`, `general`).
 - `detectDomainType` workspace analysis.
 - Automatic AGENTS.md template generation at project root based on detected domain mode during initial workspace setup.
+- Added '04-architecture.md' template for development mode and linked it in AGENTS.md for system architecture context.
 
 ### Changed
 - Replaced ambiguous `Current Phase 2` headings with `1. Active Goal`.

@@ -22,6 +22,7 @@
 - [x] Refactor AGENTS.md structure to use progressive context loading protocol and markdown links to .knowledge/ files
 - [x] Simplify AGENTS.md format to a single unified list combining knowledge links and usage context
 - [x] Change AGENTS.md document title heading from '# Agent Guidelines (AGENTS.md)' to '# AGENTS.md'
+- [x] Add 04-architecture.md template for development domain and link in AGENTS.md
 
 
 <!-- Unreflected Session Activity Detected (7/31/2026) -->

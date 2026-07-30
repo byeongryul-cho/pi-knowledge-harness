@@ -7,7 +7,7 @@
 
 - Cross-Session Knowledge Persistence: Automatically maintains project context in a `.knowledge/` directory.
 - 4 Domain Modes:
-  - `development`: Coding conventions (`conventions.md`), architecture (`architecture.md`), troubleshooting (`troubleshooting.md`).
+  - `development`: Conventions (`00-conventions.md`), plans (`01-plans.md`), changelog (`02-changelog.md`), troubleshooting (`03-troubleshooting.md`), architecture (`04-architecture.md`).
   - `research`: Key findings (`findings.md`), reference sources (`sources.md`).
   - `writing`: Tone & style guide (`style-guide.md`), glossary (`glossary.md`), outline (`outline.md`).
   - `general`: Key decisions (`decisions.md`), action items (`action-items.md`).

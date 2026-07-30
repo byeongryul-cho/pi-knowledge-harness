@@ -96,6 +96,17 @@ const DOMAIN_TEMPLATES: Record<KnowledgeType, Record<string, string>> = {
 
 <!-- Document resolved bugs and issues -->
 `,
+    "04-architecture.md": `# Project Architecture & System Design
+
+## 1. System Overview
+<!-- High-level description of system architecture and responsibilities -->
+
+## 2. Directory & Module Layout
+<!-- Module organization, folder structure, and entry points -->
+
+## 3. Core Technical Patterns & Data Flow
+<!-- Design patterns, key data flows, and subsystem integrations -->
+`,
   },
 
   research: {
@@ -183,6 +194,7 @@ This project uses a persistent knowledge base in \`.knowledge/\`. Load context p
 - **Active Plans & Tasks**: [.knowledge/01-plans.md](.knowledge/01-plans.md) — Read for current goals; update tasks upon completion.
 - **Changelog & Architecture Decisions**: [.knowledge/02-changelog.md](.knowledge/02-changelog.md) — Consult for major decisions; update when adding features or refactoring.
 - **Troubleshooting & Known Issues**: [.knowledge/03-troubleshooting.md](.knowledge/03-troubleshooting.md) — Consult when investigating or resolving complex bugs.
+- **Architecture & System Design**: [.knowledge/04-architecture.md](.knowledge/04-architecture.md) — Consult for directory layout, module responsibilities, and system design.
 `,
   research: `# AGENTS.md
 
