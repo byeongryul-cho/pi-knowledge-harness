@@ -17,12 +17,6 @@ export interface KnowledgeConfig {
   title: string;
 }
 
-interface ActivityEntry {
-  timestamp: string;
-  tool: string;
-  target?: string;
-  description: string;
-}
 
 function detectDomainType(cwd: string): KnowledgeType {
   try {
@@ -224,7 +218,6 @@ This project uses a persistent knowledge base in \`.knowledge/\`. Load context p
 export default function piKnowledgeHarness(pi: ExtensionAPI) {
   let hasUnreflectedChanges = false;
   let syncAttemptCount = 0;
-  const recentActivities: ActivityEntry[] = [];
 
   pi.setLabel("Pi Knowledge Harness");
 
@@ -373,7 +366,6 @@ ${aggregatedDocs}
   // 3. Track Session Tools Activity
   pi.on("tool_result", async (event: ToolResultEvent) => {
     const tool = event.toolName;
-    const timestamp = new Date().toLocaleTimeString();
 
     if (["write", "edit", "ast_edit"].includes(tool)) {
       let pathArg = "";
@@ -386,27 +378,17 @@ ${aggregatedDocs}
         }
       }
 
-      if (pathArg.includes(".knowledge")) {
+      const isKnowledgeEdit = pathArg.split(/[/\\]/).some(segment => segment === ".knowledge" || segment.startsWith(".knowledge"));
+
+      if (isKnowledgeEdit) {
         // Agent updated .knowledge -> Reset sync flags
         hasUnreflectedChanges = false;
         syncAttemptCount = 0;
-        recentActivities.length = 0;
       } else {
         hasUnreflectedChanges = true;
-        recentActivities.push({
-          timestamp,
-          tool,
-          target: pathArg,
-          description: `Modified file \`${pathArg}\``,
-        });
       }
     } else if (["bash", "web_search"].includes(tool)) {
       hasUnreflectedChanges = true;
-      recentActivities.push({
-        timestamp,
-        tool,
-        description: `Ran tool \`${tool}\``,
-      });
     }
   });
 
@@ -442,7 +424,7 @@ Execute the .knowledge/ edit tool NOW!`;
   });
 
 
-  // 6. Slash Command: /knowledge-mode <mode>
+  // 5. Slash Command: /knowledge-mode <mode>
   pi.registerCommand("knowledge-mode", {
     description: "Switch .knowledge domain mode (development | research | writing | general)",
     handler: async (args: string, ctx: ExtensionContext) => {
@@ -466,7 +448,7 @@ Execute the .knowledge/ edit tool NOW!`;
     },
   });
 
-  // 7. Session Stop: Safety net logging if unreflected changes remain
+  // 6. Session Stop: Safety net logging if unreflected changes remain
   pi.on("session_stop", async (_event: SessionStopEvent) => {
     if (hasUnreflectedChanges) {
       pi.logger.warn("Session stopped with unreflected project changes in .knowledge/.");

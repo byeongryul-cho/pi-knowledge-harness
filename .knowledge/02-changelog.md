@@ -28,3 +28,4 @@
 - Fixed issue where agent yielded response without updating `.knowledge/` documents.
 - Fixed cluttered `.knowledge/` files filled with useless tool execution logs.
 - Fixed `session_stop` safety net appending HTML comment clutter to `01-plans.md` on session close.
+- Fixed potential path segment false-positives for .knowledge/ detection and removed dead code ('recentActivities').

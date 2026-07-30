@@ -26,4 +26,5 @@
 - [x] Order AGENTS.md document links as a numbered priority list (Conventions -> Architecture -> Plans -> Changelog -> Troubleshooting)
 - [x] Purge obsolete /knowledge-sync slash command and references across codebase and documentation
 - [x] Remove file modification safety net from session_stop event handler to prevent comment clutter in plans
+- [x] Complete codebase review and purge dead code (`recentActivities`), fix path boundary checks for `.knowledge`
 
