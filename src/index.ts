@@ -225,6 +225,21 @@ This directory stores persistent project knowledge across all OMP sessions.
   });
 
   // 2. Before Provider Request: Inject .knowledge/ documents into System Prompt
+  function getDomainGuideline(type: KnowledgeType): string {
+    switch (type) {
+      case "development":
+        return "Every time you create skills, write code, make architectural decisions, or modify task status, continuously update .knowledge/ files (e.g., 01-plans.md, 02-changelog.md, 00-conventions.md, 03-troubleshooting.md).";
+      case "research":
+        return "Every time you uncover key insights, analyze sources, or test hypotheses, continuously update .knowledge/ files (e.g., findings.md, hypotheses.md, action-items.md).";
+      case "writing":
+        return "Every time you outline structures, refine drafts, or establish terminology, continuously update .knowledge/ files (e.g., outline.md, drafts.md).";
+      case "general":
+      default:
+        return "Every time you reach key decisions, define action items, or update task progress, continuously update .knowledge/ files (e.g., decisions.md, action-items.md).";
+    }
+  }
+
+  // 2. Before Provider Request: Inject .knowledge/ documents into System Prompt
   pi.on("before_provider_request", async (event: BeforeProviderRequestEvent, ctx: ExtensionContext) => {
     const cwd = getWorkspaceDir(ctx);
     const knowledgeDir = path.join(cwd, ".knowledge");
@@ -234,15 +249,27 @@ This directory stores persistent project knowledge across all OMP sessions.
       const config = await loadConfig(knowledgeDir);
       const aggregatedDocs = await readKnowledgeFiles(knowledgeDir);
 
-      if (aggregatedDocs.trim().length > 0 && isRecord(event.payload)) {
-        const knowledgePrompt = `\n\n[PERSISTENT KNOWLEDGE BASE - Mode: ${config.type.toUpperCase()}]
+      const unreflectedChanges = sessionActivities.filter(a => a.type === "tool");
+      const domainGuideline = getDomainGuideline(config.type);
+
+      if (isRecord(event.payload)) {
+        let knowledgePrompt = `\n\n[PERSISTENT KNOWLEDGE BASE - Mode: ${config.type.toUpperCase()}]
 You are backed by a persistent .knowledge/ base across sessions.
-- Always check and respect existing principles, decisions, and plans in .knowledge/ files.
-- When new insights, architectural decisions, or conventions emerge during this session, explicitly document or update them in .knowledge/ files.
+- MANDATORY PRINCIPLE: ${domainGuideline}
+- CONTINUOUS WORKFLOW: NEVER yield or finish your turn without ensuring the active .knowledge/ base reflects all findings, decisions, outlines, or progress from this session.
 
 Active Knowledge Files:
 ${aggregatedDocs}
 `;
+
+        if (unreflectedChanges.length > 0) {
+          knowledgePrompt += `\n[UNREFLECTED SESSION ACTIVITIES DETECTED]
+You have performed ${unreflectedChanges.length} tool activities in this session:
+${unreflectedChanges.slice(-5).map(a => `- [${a.timestamp}] ${a.description}`).join("\n")}
+
+CRITICAL INSTRUCTION: Before completing your turn, YOU MUST IMMEDIATELY UPDATE the active .knowledge/ files so cross-session context is preserved regardless of domain (development, research, writing, general)!
+`;
+        }
 
         if (typeof event.payload.systemPrompt === "string") {
           event.payload.systemPrompt += knowledgePrompt;
@@ -283,6 +310,9 @@ ${aggregatedDocs}
           type: "tool",
           description: `Modified file: \`${pathArg}\` using tool \`${tool}\``,
         });
+      } else {
+        // Clear pending unreflected activity warnings once agent updates .knowledge
+        sessionActivities.length = 0;
       }
     } else if (tool === "bash") {
       const cmd = isRecord(event.input) && typeof event.input.command === "string" ? event.input.command : "bash";
