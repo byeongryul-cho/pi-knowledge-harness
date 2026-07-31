@@ -1,4 +1,4 @@
-# Changelog & Architecture Decisions
+# Architecture & Design Decisions
 
 ## [1.1.0] - 2026-07-31
 
@@ -11,6 +11,8 @@
 - **Removal of `.knowledge/README.md`**: Removed static `README.md` creation inside `.knowledge/` directory during workspace setup, as `AGENTS.md` and `.knowledge/config.yml` already serve as entry points and static READMEs do not update when switching domain modes.
 - **Universal `00-overview.md` Index**: Added `00-overview.md` as the primary index document across all domain modes (`development`, `research`, `writing`, `general`). Auto-populates project name and description from project manifests (`package.json`, `pyproject.toml`, `Cargo.toml`).
 - **Un-numbered Knowledge Document Filenames & Headings**: Removed all numeric prefixes (`00-`, `01-`, `02-`, `03-`, `04-`) and heading numbers from all Knowledge documents (`overview.md`, `conventions.md`, `plans.md`, `changelog.md`, `troubleshooting.md`, `architecture.md`).
+- **Decision-Focused Changelog Standard**: Enforced strict rules across harness templates, AGENTS.md, conventions.md, and turn_end steer instructions to restrict `.knowledge/changelog.md` strictly to high-level architectural decisions (ADRs) and design choices, prohibiting raw file-level code edit logs (which Git already manages).
+- **Migration from `changelog.md` to `decisions.md`**: Renamed `.knowledge/changelog.md` to `.knowledge/decisions.md` across the entire harness. This eliminates AI agent confusion between Git commit histories and Knowledge Base documentation, enforcing that `.knowledge/decisions.md` strictly captures high-level architectural choices (ADRs) and trade-offs while Git handles code diffs.
 
 ### Added
 - Standardized document templates across all domain modes (`development`, `research`, `writing`, `general`).

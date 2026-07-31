@@ -1,7 +1,7 @@
 # Development Plans & Milestones
 
 ## Active Goal
-- Steer Turn Interception Architecture & Unified Knowledge Base Naming Schema
+- Architecture & Design Decisions (`decisions.md`) Standard Enforcement
 
 ## In Progress
 - [ ] Multi-session context compression and summarization enhancements
@@ -34,4 +34,7 @@
 - [x] Enhance `detectDomainType` workspace scanner with broader build manifests, source directories, and language extensions
 - [x] Purge multi-domain detection logic (`detectDomainType`, `KnowledgeType`, `/knowledge-mode` command) and focus purely on development workflows
 - [x] Remove `config.yml` creation and dependency across the harness
+- [x] Enforce decision-focused changelog policy across harness templates, steer instructions, and guidelines (exclude file-level diffs from changelog)
+- [x] Rename changelog.md to decisions.md across templates, AGENTS.md, conventions.md, architecture.md, and harness codebase to focus strictly on architectural decisions
+- [x] Simplify AGENTS.md document descriptions by removing redundant parenthetical rule warnings
 

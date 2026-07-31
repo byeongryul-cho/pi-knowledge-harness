@@ -7,7 +7,7 @@ It maintains persistent project context in `.knowledge/` and enforces active kno
 ## Directory & Module Layout
 - `src/index.ts`: Core extension entry point containing domain auto-detection, config parsing, template instantiation, prompt injection, tool activity tracking, steer interception, slash commands, and safety-net logging.
 - `AGENTS.md`: Project-root guideline file created during initialization. Directs agents to load context progressively using markdown links to `.knowledge/` documents.
-- `.knowledge/`: Persistent workspace directory holding domain configuration (`config.yml`), overview (`overview.md`), guidelines (`conventions.md`), active goals (`plans.md`), change history (`changelog.md`), troubleshooting notes (`troubleshooting.md`), and system architecture (`architecture.md`).
+- `.knowledge/`: Persistent workspace directory holding overview (`overview.md`), guidelines (`conventions.md`), active goals (`plans.md`), architecture decisions (`decisions.md`), troubleshooting notes (`troubleshooting.md`), and system architecture (`architecture.md`).
 
 ## Core Technical Patterns & Hooks
 - **Domain Auto-Detection (`detectDomainType`)**: Scans workspace indicators (`package.json`, `Cargo.toml`, `notebooks`, `chapters`, etc.) to classify workspace mode as `development`, `research`, `writing`, or `general`.

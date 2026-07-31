@@ -67,6 +67,9 @@ const KNOWLEDGE_TEMPLATES: Record<string, string> = {
 ## General Principles
 - **NO EMOJI**: Do not use emojis in commit messages, code, comments, or documentation.
 
+## Knowledge Base & Decisions Rules
+- **Decision Log Standard**: Record ONLY architectural decisions (ADRs), key design choices, and major milestone shifts in \`.knowledge/decisions.md\`.
+- **NO File-Level Logs**: Do NOT list individual file creations, edits, function additions, or tool execution history in \`decisions.md\` (Git tracks code diffs and commit logs).
 ## Git Commit Convention
 - Format: \`<type>(<scope>): <subject>\`
 - Types: \`feat\`, \`fix\`, \`docs\`, \`style\`, \`refactor\`, \`test\`, \`chore\`
@@ -88,16 +91,16 @@ const KNOWLEDGE_TEMPLATES: Record<string, string> = {
 ## Completed
 - [x] Initial workspace setup
 `,
-  "changelog.md": `# Changelog & Architecture Decisions
+  "decisions.md": `# Architecture & Design Decisions
+
+> **Rule**: Do NOT record file-level changes, code edits, or module implementation details (Git manages code history and diffs). Record ONLY high-level architectural decisions (ADRs), key design choices, technology stack changes, and major milestone shifts.
 
 ## [Unreleased]
 
-### Added
-- Workspace initialization
+### Architectural Decisions
+- Initial workspace setup and harness configuration
 
-### Changed
-
-### Fixed
+### Major Design Choices & Trade-Offs
 `,
   "troubleshooting.md": `# Troubleshooting Log
 
@@ -124,7 +127,7 @@ This project uses a persistent knowledge base in \`.knowledge/\`. Load context p
 - **Conventions & Code Style**: [.knowledge/conventions.md](.knowledge/conventions.md) — Read for coding standards, git conventions, and core principles.
 - **Architecture & System Design**: [.knowledge/architecture.md](.knowledge/architecture.md) — Read to understand module boundaries, directory layout, and data flow.
 - **Active Plans & Tasks**: [.knowledge/plans.md](.knowledge/plans.md) — Read for active goals and backlog; update tasks upon completion.
-- **Changelog & History**: [.knowledge/changelog.md](.knowledge/changelog.md) — Consult for historical decisions and architectural changes.
+- **Architecture & Design Decisions**: [.knowledge/decisions.md](.knowledge/decisions.md) — Consult for key architectural decisions and major design choices.
 - **Troubleshooting & Known Issues**: [.knowledge/troubleshooting.md](.knowledge/troubleshooting.md) — Consult when investigating or resolving complex bugs.
 `;
 
@@ -293,9 +296,10 @@ ${aggregatedDocs}
 You edited project files in this turn, but you have NOT updated .knowledge/ yet.
 
 BEFORE YIELDING TO THE USER:
-1. Execute an 'edit' or 'write' tool call on .knowledge/ (e.g. overview.md, plans.md, or changelog.md).
-2. Document high-level completed goals, architectural decisions, or status updates in human-readable terms.
-3. DO NOT list file paths or raw tool commands! Summarize the conceptual work and mark completed tasks [x].
+1. Execute an 'edit' or 'write' tool call on .knowledge/ (e.g. overview.md, plans.md, or decisions.md).
+2. If updating decisions.md, record ONLY high-level architectural decisions (ADRs), key design choices, or major milestone shifts.
+3. CRITICAL DECISIONS RULE: DO NOT list individual file paths, code edits, function names, or tool execution history! Git manages file-level diffs and history.
+4. Update active tasks [x] in plans.md or system overview in overview.md as needed.
 Execute the .knowledge/ edit tool NOW!`;
 
     try {
