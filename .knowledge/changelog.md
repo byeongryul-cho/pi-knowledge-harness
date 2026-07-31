@@ -19,6 +19,7 @@
 - Added '04-architecture.md' template for development mode and linked it in AGENTS.md for system architecture context.
 - Added `00-overview.md` index template across all domain modes and set it as step 1 in `AGENTS.md`.
 - Added `getProjectMetadata` workspace scanner to automatically populate project name and description in `00-overview.md`.
+- Automatic `CLAUDE.md` creation containing `@AGENTS.md` at project root on workspace initialization.
 
 ### Changed
 - Replaced ambiguous `Current Phase 2` headings with `1. Active Goal`.

@@ -362,6 +362,12 @@ export default function piKnowledgeHarness(pi: ExtensionAPI) {
       const agentsTemplate = AGENTS_TEMPLATES[config.type] || AGENTS_TEMPLATES.general;
       await fs.promises.writeFile(agentsPath, agentsTemplate);
     }
+
+    // Ensure CLAUDE.md exists at project root referencing AGENTS.md
+    const claudePath = path.join(cwd, "CLAUDE.md");
+    if (!fs.existsSync(claudePath)) {
+      await fs.promises.writeFile(claudePath, "@AGENTS.md\n");
+    }
     return config;
   }
 

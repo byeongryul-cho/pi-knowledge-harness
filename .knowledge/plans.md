@@ -30,4 +30,5 @@
 - [x] Introduce `00-overview.md` index template across all domain modes with automatic project metadata extraction (`package.json`, `pyproject.toml`, `Cargo.toml`)
 - [x] Include `.knowledge/00-overview.md` in steer turn interception instructions so agents enrich overview context
 - [x] Remove numeric prefixes (`00-`, `01-`, `02-`, etc.) from all Knowledge document filenames and headings (`overview.md`, `conventions.md`, `plans.md`, `changelog.md`, `troubleshooting.md`, `architecture.md`)
+- [x] Automatic `CLAUDE.md` template generation (`@AGENTS.md`) at project root on workspace initialization
 
