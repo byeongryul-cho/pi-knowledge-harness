@@ -31,4 +31,7 @@
 - [x] Include `.knowledge/00-overview.md` in steer turn interception instructions so agents enrich overview context
 - [x] Remove numeric prefixes (`00-`, `01-`, `02-`, etc.) from all Knowledge document filenames and headings (`overview.md`, `conventions.md`, `plans.md`, `changelog.md`, `troubleshooting.md`, `architecture.md`)
 - [x] Automatic `CLAUDE.md` template generation (`@AGENTS.md`) at project root on workspace initialization
+- [x] Enhance `detectDomainType` workspace scanner with broader build manifests, source directories, and language extensions
+- [x] Purge multi-domain detection logic (`detectDomainType`, `KnowledgeType`, `/knowledge-mode` command) and focus purely on development workflows
+- [x] Remove `config.yml` creation and dependency across the harness
 

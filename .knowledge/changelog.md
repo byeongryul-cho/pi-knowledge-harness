@@ -32,9 +32,10 @@
 - Removed `.knowledge/README.md` boilerplate file creation from `initKnowledgeBase`.
 - Updated steer turn interception instruction to explicitly prompt AI agents to enrich `.knowledge/00-overview.md` along with plans and changelogs.
 - Renamed all Knowledge template filenames (`overview.md`, `conventions.md`, `plans.md`, `changelog.md`, `troubleshooting.md`, `architecture.md`) and removed numeric heading prefixes across all domain modes.
-
-### Fixed
+- Removed all multi-domain detection logic (`detectDomainType`, `KnowledgeType`, `/knowledge-mode` command) and converted the harness into a dedicated development-focused harness.
+- Removed unnecessary `.knowledge/config.yml` file creation and dependency for a cleaner, zero-boilerplate setup.
 - Fixed issue where agent yielded response without updating `.knowledge/` documents.
 - Fixed cluttered `.knowledge/` files filled with useless tool execution logs.
 - Fixed `session_stop` safety net appending HTML comment clutter to `01-plans.md` on session close.
 - Fixed potential path segment false-positives for .knowledge/ detection and removed dead code ('recentActivities').
+- Enhanced `detectDomainType` workspace scanner to recognize additional build configs (`requirements.txt`, `Makefile`, `Gemfile`, `pom.xml`, `build.gradle`, `mix.exs`, `deno.json`, `Dockerfile`, `.git`), common code directories (`lib`, `app`, `cmd`, `test`), and source extensions (`.ts`, `.py`, `.rs`, `.go`, `.java`, `.cpp`) to prevent false fallback to `general` domain mode.
